@@ -15,8 +15,8 @@ Deploy this application to IBM Cloud.
 1. Install and configure the [IBM Cloud CLI](https://cloud.ibm.com/docs/cli)
 2. Clone this repository
    ```
-   $ git clone https://github.com/Call-for-Code/weather-api-nodejs.git
-   $ cd weather-api-nodejs
+   $ git clone https://github.com/teamcodered/weather-alerts-api-feeder.git
+   $ cd weather-alerts-api-feeder
    ```  
 3. Deploy the application without starting it
    ```
@@ -30,21 +30,45 @@ Deploy this application to IBM Cloud.
 
 ## Getting Started on your local machine
 
-To run this application on your local machine, first install Node.js.
+To run this application on your local machine, first install Node.js 22 or newer.
 
 1. Clone this repository
    ```
-   $ git clone https://github.com/Call-for-Code/weather-api-nodejs.git
-   $ cd weather-api-nodejs
+   $ git clone https://github.com/teamcodered/weather-alerts-api-feeder.git
+   $ cd weather-alerts-api-feeder
    ```  
 2. Install the dependencies
    ```
-   $ npm install
+   $ npm ci --ignore-scripts
    ```
 3. Set your Weather API key `<YOUR_API_KEY>` when running the application    
    ```
    $ WEATHER_API_KEY=<YOUR_API_KEY> node app.js
    ```
+
+## Development and dependency checks
+
+```sh
+npm ci --ignore-scripts
+npm test
+npm run audit:dependencies
+```
+
+The tests use fictional weather responses, loopback HTTP servers, and temporary
+alert files. No Weather API key is needed, and tests do not contact the live
+provider. GitHub Actions runs the tests and dependency audit on Node 22 and 24.
+
+`npm start` still contacts the configured weather provider and opens the HTTP
+server. Importing `createApp` from `app.js` does neither; callers can inject a
+weather client, output file, and timers for isolated checks.
+
+The HTTP client uses Node's built-in `fetch`, a 30-second timeout, and refuses
+redirects. Templates now use Pug (`.pug` files). See the
+[4 October 2026 dependency refresh](docs/dependency-refresh-2026-10-04.md) for
+resolved versions, validation evidence, and remaining runtime limitations.
+
+The IBM Cloud and provider onboarding instructions above are historical; live
+provider access and cloud deployment were not revalidated by the dependency refresh.
 
 ## Links
 

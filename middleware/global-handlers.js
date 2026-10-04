@@ -1,4 +1,4 @@
-const bodyParser = require('body-parser');
+const express = require('express');
 const methodOverride = require('method-override');
 const logger = require('morgan');
 
@@ -11,10 +11,10 @@ function logErrors(err, req, res, next){
 module.exports = function(app){
     app.use(logger('combined'));
 
-    app.use(bodyParser.urlencoded({
+    app.use(express.urlencoded({
         extended: true
       }));
-    app.use(bodyParser.json());
+    app.use(express.json());
     
     app.use(methodOverride());
 
