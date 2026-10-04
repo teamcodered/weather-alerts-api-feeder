@@ -31,8 +31,9 @@ HTTP status errors omit the URL, query string and response body.
 The `createApp` factory allows isolated regression tests. The CLI retains its
 initial refresh and listener. Each app has its own state and timers, with a
 disposal hook for timer/listener cleanup. Reconfiguring the interval clears the
-previous timer. Alert output now ends its writable stream and can create the
-file without first unlinking an existing file.
+previous timer. Alert output writes complete JSON to a unique sibling temporary
+file, then atomically replaces the saved snapshot. This also supports creating
+the initial file and preserves the previous snapshot if publication fails.
 
 ## Validation
 
@@ -50,7 +51,7 @@ Counts are npm's package-level vulnerability reports, not unique CVEs or proven
 exploit paths. They describe the registry's findings on this date, not a guarantee
 that the application is free of security defects.
 
-Fourteen regression tests cover:
+Seventeen regression tests cover:
 
 - Weather query encoding, compressed JSON, no-content responses, HTTP/network
   failures, malformed JSON, blocked redirects, and timeouts.
@@ -60,14 +61,29 @@ Fourteen regression tests cover:
 - JSON and form interval configuration, timer replacement, polling, and stop.
 - Nested form arrays, JSON parsing, malformed requests, and default body limits.
 - Static CSS, Pug error rendering, and escaped template messages.
+- Concurrent long/short snapshot writes, failed publication, and failed
+  serialization without corruption of the previous snapshot.
 
 Tests use loopback servers, mocked weather data, controlled timers, and temporary
 files. They do not use live weather services or modify the tracked alert snapshot.
-All 14 tests passed locally on Node 22.23.2 and Node 24.13.1. The Node 22 run
+All 17 tests passed locally on Node 22.23.2 and Node 24.13.1. The Node 22 run
 required permission to bind loopback test servers after the sandbox denied it.
 CI is configured to run installation, tests, and the audit on Node 22 and 24.
 The official checkout and setup-node actions are pinned to verified release
-commits (v7.0.1 and v7.0.0). Hosted CI had not run at the time of local validation.
+commits (v7.0.1 and v7.0.0). Hosted validation of the initial head is recorded below.
+
+## Pre-merge review
+
+The initial 14-test head passed [hosted CI on Node 22 and 24](https://github.com/teamcodered/weather-alerts-api-feeder/actions/runs/37196064429).
+Review of the replacement PR found a new overlapping-write regression: two
+streams could truncate the same inode before either completed, allowing a short
+snapshot to retain trailing bytes from a longer one. Unique temporary files and
+atomic renames resolve that persistence defect. Three focused regression tests
+cover concurrent publication and preservation of the previous file on failure.
+An app-level reproduction with fictional data and 100 overlapping long/short
+pairs produced 61 corrupt snapshots before the fix and zero after the fix, with
+no incorrect contents, logged errors, or temporary files left after 200 publications.
+This does not change the existing ordering of overlapping provider refreshes.
 
 ## Remaining boundaries
 

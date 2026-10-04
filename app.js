@@ -1,5 +1,6 @@
 // Load Modules for handlling HTTP Requests.
 const requestWeather = require('./lib/weather-request');
+const writeAlertSnapshot = require('./lib/alert-snapshot');
 const createError = require('http-errors');
 const setupHTTP = require('./middleware/global-handlers');
 // const zlib = require('zlib');
@@ -57,12 +58,10 @@ function createApp({
   };
 
   // Add Alerts Build Completion Event
-  const handleAlertEmitter = function(msg){
-    const writable = fs.createWriteStream(alertsFile, 'utf8');
-    writable.on('error', function(e) {handleFail(e)});
-    console.log("Auto generated message from ON DEMAND service layer " + msg);
+  const handleAlertEmitter = async function(msg){
     try{
-      writable.end(JSON.stringify(alertsFonud));
+      await writeAlertSnapshot(alertsFile, alertsFonud);
+      console.log("Auto generated message from ON DEMAND service layer " + msg);
       console.log("======= Weather alerts are aggregated in the file =======");
     }catch(e){
       handleFail(e);
